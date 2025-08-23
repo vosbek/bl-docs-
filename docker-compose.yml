@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  jira-card-creator:
+    build: .
+    ports:
+      - "8000:8000"  # Backend API
+      - "8080:8080"  # Frontend (if needed)
+    volumes:
+      # Mount your repositories folder (CHANGE THIS PATH)
+      - ${REPOSITORY_BASE_PATH:-./repositories}:/app/repositories:ro
+      # Mount logs for debugging
+      - ./logs:/app/logs
+      # Mount cache directories for persistence
+      - ./.repo_cache:/app/.repo_cache
+      - ./.context_cache:/app/.context_cache
+    environment:
+      # Repository configuration
+      - REPOSITORY_BASE_PATH=/app/repositories
+      
+      # AWS Configuration (from .env file)
+      - AWS_PROFILE=${AWS_PROFILE}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      
+      # Oracle Database Configuration (optional)
+      - ORACLE_JDBC_URL=${ORACLE_JDBC_URL}
+      - ORACLE_USERNAME=${ORACLE_USERNAME}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_SCHEMA=${ORACLE_SCHEMA}
+      
+      # Jira Configuration
+      - JIRA_BASE_URL=${JIRA_BASE_URL}
+      - JIRA_PAT=${JIRA_PAT}
+      - JIRA_USERNAME=${JIRA_USERNAME}
+      
+      # Application Configuration
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    
+    # Pass through AWS credentials for SSO
+    volumes:
+      - ${HOME}/.aws:/root/.aws:ro
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    restart: unless-stopped
+
+# Optional: Redis for caching (uncomment if needed)
+# redis:
+#   image: redis:7-alpine
+#   ports:
+#     - "6379:6379"
+#   volumes:
+#     - redis_data:/data
+#   restart: unless-stopped
+
+# volumes:
+#   redis_data:

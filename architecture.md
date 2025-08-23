@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Multi-Agent Jira Card Creation System is a containerized local application that automates the creation of high-quality Jira cards using AI agents. The system follows a microservices-within-container pattern with clear separation between frontend, backend, and AI processing components.
+The Multi-Agent Jira Card Creation System is a containerized local application that automates the creation of high-quality Jira cards using AI agents with codebase analysis and database integration capabilities. The system analyzes 50+ local repositories and Oracle database schemas to generate context-aware, implementation-specific Jira cards. It follows a microservices-within-container pattern with clear separation between frontend, backend, repository analysis, database integration, and AI processing components.
 
 ## High-Level Architecture
 
@@ -12,37 +12,49 @@ graph TB
         subgraph "Frontend Layer"
             A[Angular UI<br/>PrimeNG]
             A1[Task Selector]
-            A2[Markdown Editor]
-            A3[Jira Preview & Validation]
+            A2[Repository Context Selector]
+            A3[Markdown Editor with Code References]
+            A4[Jira Preview & Validation]
             A --> A1
             A --> A2
             A --> A3
+            A --> A4
         end
         
         subgraph "Backend Layer"
             B[FastAPI Backend]
             B1[Workflow Engine]
             B2[Agent Orchestrator]
+            B3[Repository Scanner]
+            B4[Database Connector]
+            B5[Context Manager]
             B --> B1
             B --> B2
+            B --> B3
+            B --> B4
+            B --> B5
         end
         
-        subgraph "AI Agent Layer"
-            C1[Jr Developer Agent<br/>Question Generation]
-            C2[Tech Lead Agent<br/>Answer Generation]
-            C3[Jira Card Agent<br/>Card Formatting]
+        subgraph "AI Agent Layer with Enhanced Tools"
+            C1[Jr Developer Agent<br/>Code Analysis & Questions]
+            C2[Tech Lead Agent<br/>Architecture Analysis & Answers]
+            C3[Jira Card Agent<br/>Implementation-Specific Cards]
         end
         
         A <--> B
         B2 --> C1
         B2 --> C2
         B2 --> C3
+        B3 --> B5
+        B4 --> B5
     end
     
     subgraph "External Services"
         D[AWS Bedrock<br/>Sonnet 3.7]
         E[Jira API<br/>Template Clone & Create]
         F[Local Files<br/>tasks.md & logs]
+        G[Local Repositories<br/>50+ Codebases]
+        H[Oracle Database<br/>Schema Analysis]
     end
     
     C1 --> D
@@ -50,6 +62,8 @@ graph TB
     C3 --> D
     B --> E
     B --> F
+    B3 --> G
+    B4 --> H
 ```
 
 ## Component Details
@@ -68,25 +82,38 @@ graph TB
    - Shows status indicators (pending/in-progress/complete)
    - Refresh functionality for task file updates
 
-2. **Workflow Stepper Component**
+2. **Repository Context Selector**
+   - Displays available local repositories
+   - Multi-select interface for relevant codebases
+   - Repository structure preview
+   - Database context selection
+
+3. **Workflow Stepper Component**
    - Multi-step process visualization
    - Progress tracking and navigation
    - Error state handling
+   - Repository and database analysis indicators
 
-3. **Markdown Editor Component**
+4. **Enhanced Markdown Editor Component**
    - Rich markdown editing with syntax highlighting
+   - Code snippet integration and references
+   - File path and line number linking
+   - Database schema references
    - Real-time preview capabilities
-   - Validation and formatting tools
 
-4. **Jira Preview Component**
+5. **Jira Preview Component**
    - Side-by-side template vs generated card comparison
    - Field-by-field difference highlighting
+   - Code and database reference validation
    - Final validation interface
 
 **Services:**
 - `TaskService`: Task management and status tracking
-- `WorkflowService`: Pipeline orchestration
+- `RepositoryService`: Repository selection and context management
+- `DatabaseService`: Oracle connection and schema analysis
+- `WorkflowService`: Pipeline orchestration with codebase analysis
 - `JiraService`: Jira API integration
+- `CodeReferenceService`: File and database reference management
 - `ErrorService`: Global error handling and logging
 
 ### Backend Layer (FastAPI)
@@ -135,20 +162,52 @@ graph TB
        - create_new_card()
    ```
 
+5. **Repository Scanner (`repository/`)**
+   ```python
+   class RepositoryScanner:
+       - scan_repository_folder()
+       - index_file_structure()
+       - detect_languages_frameworks()
+       - analyze_dependencies()
+       - search_code_patterns()
+       - read_specific_files()
+   ```
+
+6. **Database Connector (`database/`)**
+   ```python
+   class DatabaseConnector:
+       - establish_jdbc_connection()
+       - analyze_schema_structure()
+       - execute_analysis_queries()
+       - extract_table_metadata()
+       - identify_relationships()
+       - validate_connection_health()
+   ```
+
+7. **Context Manager (`context/`)**
+   ```python
+   class ContextManager:
+       - manage_repository_context()
+       - manage_database_context()
+       - correlate_code_and_schema()
+       - cache_analysis_results()
+       - provide_agent_context()
+   ```
+
 ### AI Agent Layer (Strands SDK)
 
 ```mermaid
 graph LR
     subgraph "Agent Configuration"
-        A[Jr Developer Agent]
-        B[Tech Lead Agent]
-        C[Jira Card Agent]
+        A[Jr Developer Agent<br/>Code Analysis]
+        B[Tech Lead Agent<br/>Architecture Analysis]
+        C[Jira Card Agent<br/>Implementation Cards]
     end
     
-    subgraph "Tools & Capabilities"
-        A1[Question Generator<br/>Requirement Analyzer<br/>File Reader]
-        B1[Technical Analyzer<br/>Architecture Advisor<br/>Answer Generator]
-        C1[Jira Formatter<br/>Field Mapper<br/>Card Validator]
+    subgraph "Enhanced Tools & Capabilities"
+        A1[Repository Scanner<br/>Code Pattern Detector<br/>File Reader<br/>Question Generator<br/>Dependency Analyzer]
+        B1[Architecture Analyzer<br/>Database Schema Reader<br/>Code Pattern Matcher<br/>Technical Advisor<br/>Answer Generator]
+        C1[Implementation Referencer<br/>Database Migration Planner<br/>Code Example Finder<br/>Jira Formatter<br/>Card Validator]
     end
     
     A --> A1
@@ -158,6 +217,12 @@ graph LR
     A1 --> D[AWS Bedrock<br/>Sonnet 3.7]
     B1 --> D
     C1 --> D
+    
+    A1 --> E[Repository Context]
+    B1 --> E
+    B1 --> F[Database Context]
+    C1 --> E
+    C1 --> F
 ```
 
 **Agent Architecture:**
@@ -170,7 +235,10 @@ Each agent is implemented as a separate Strands agent with specialized tools and
        "model": "anthropic.claude-3-5-sonnet-v2",
        "system_prompt": jr_developer_prompt,
        "tools": [
+           "repository_scanner",
            "file_reader",
+           "code_pattern_detector",
+           "dependency_analyzer",
            "requirement_analyzer",
            "question_generator"
        ]
@@ -184,8 +252,11 @@ Each agent is implemented as a separate Strands agent with specialized tools and
        "model": "anthropic.claude-3-5-sonnet-v2",
        "system_prompt": tech_lead_prompt,
        "tools": [
+           "architecture_analyzer",
+           "database_schema_reader",
+           "code_pattern_matcher",
            "technical_analyzer",
-           "architecture_advisor",
+           "cross_repo_searcher",
            "answer_generator"
        ]
    }
@@ -198,8 +269,11 @@ Each agent is implemented as a separate Strands agent with specialized tools and
        "model": "anthropic.claude-3-5-sonnet-v2", 
        "system_prompt": jira_card_prompt,
        "tools": [
+           "implementation_referencer",
+           "database_migration_planner",
+           "code_example_finder",
+           "file_path_linker",
            "jira_formatter",
-           "field_mapper",
            "card_validator"
        ]
    }
@@ -268,6 +342,38 @@ class JiraCard:
     generated_fields: dict
     cleared_fields: list
     final_payload: dict
+    code_references: List[CodeReference]
+    database_references: List[DatabaseReference]
+
+class RepositoryContext:
+    repository_paths: List[str]
+    selected_repos: List[str]
+    languages: List[str]
+    frameworks: List[str]
+    file_structure: dict
+    recent_changes: List[GitCommit]
+    dependencies: dict
+
+class DatabaseContext:
+    jdbc_url: str
+    schema_name: str
+    connection_status: bool
+    tables: List[TableMetadata]
+    relationships: List[ForeignKeyRelation]
+    recent_migrations: List[Migration]
+
+class CodeReference:
+    file_path: str
+    line_number: Optional[int]
+    function_name: Optional[str]
+    class_name: Optional[str]
+    description: str
+
+class DatabaseReference:
+    table_name: str
+    column_names: List[str]
+    operation_type: str  # SELECT, INSERT, UPDATE, DELETE
+    description: str
 ```
 
 ## External Integration Details
@@ -349,6 +455,148 @@ FIELDS_TO_CLEAR = [
 ]
 ```
 
+## Repository Analysis Architecture
+
+### Repository Discovery and Indexing
+
+```mermaid
+graph TD
+    A[Repository Folder Scan] --> B[Detect Git Repositories]
+    B --> C[Language Detection]
+    C --> D[Framework Identification]
+    D --> E[Dependency Analysis]
+    E --> F[File Structure Indexing]
+    F --> G[Code Pattern Detection]
+    G --> H[Repository Context Cache]
+    
+    I[Task Selection] --> J[Repository Context Selection]
+    J --> H
+    H --> K[Agent Tool Context]
+```
+
+**Repository Scanning Process:**
+```python
+class RepositoryScanner:
+    def scan_repositories(self, base_path: str) -> List[RepositoryInfo]:
+        # 1. Discover all .git directories
+        # 2. Analyze each repository structure
+        # 3. Detect primary languages (Java, Python, JavaScript, etc.)
+        # 4. Identify frameworks (Spring, React, Angular, etc.)
+        # 5. Parse package files (pom.xml, package.json, requirements.txt)
+        # 6. Index file structure and key directories
+        # 7. Cache results for performance
+        
+    def search_code_patterns(self, pattern: str, repos: List[str]) -> List[Match]:
+        # Search across selected repositories
+        # Support regex and semantic search
+        # Return file paths, line numbers, and context
+        
+    def analyze_dependencies(self, repo_path: str) -> DependencyGraph:
+        # Parse dependency files
+        # Identify external libraries
+        # Map internal dependencies
+        # Detect version conflicts
+```
+
+### Code Analysis Tools
+
+```mermaid
+graph LR
+    subgraph "Code Analysis Capabilities"
+        A[File Reader] --> A1[Read Specific Files]
+        A[File Reader] --> A2[Extract Code Snippets]
+        
+        B[Pattern Detector] --> B1[Function Signatures]
+        B[Pattern Detector] --> B2[Class Definitions]
+        B[Pattern Detector] --> B3[Configuration Patterns]
+        
+        C[Dependency Analyzer] --> C1[Library Usage]
+        C[Dependency Analyzer] --> C2[Import Statements]
+        C[Dependency Analyzer] --> C3[Version Compatibility]
+        
+        D[Git Analyzer] --> D1[Recent Commits]
+        D[Git Analyzer] --> D2[Branch Analysis]
+        D[Git Analyzer] --> D3[Change Frequency]
+    end
+```
+
+## Database Integration Architecture
+
+### Oracle JDBC Connection Management
+
+```mermaid
+graph TD
+    A[Database Context Selection] --> B[JDBC Connection Pool]
+    B --> C[Connection Health Check]
+    C --> D{Connection Valid?}
+    D -->|Yes| E[Schema Analysis]
+    D -->|No| F[Reconnection Logic]
+    F --> B
+    
+    E --> G[Table Metadata Extraction]
+    G --> H[Relationship Analysis]
+    H --> I[Constraint Discovery]
+    I --> J[Database Context Cache]
+    
+    K[Agent Database Query] --> L[Query Executor]
+    L --> M[Result Processing]
+    M --> N[Security Filtering]
+    N --> O[Response Formatting]
+```
+
+**Database Integration Components:**
+```python
+class DatabaseConnector:
+    def __init__(self, jdbc_url: str, username: str, password: str):
+        self.pool = create_connection_pool(jdbc_url, username, password)
+        
+    def analyze_schema(self, schema_name: str) -> SchemaAnalysis:
+        # 1. Extract all table definitions
+        # 2. Identify primary and foreign keys
+        # 3. Analyze column types and constraints
+        # 4. Map table relationships
+        # 5. Identify indexes and performance considerations
+        
+    def execute_analysis_query(self, query: str) -> QueryResult:
+        # Execute read-only queries for analysis
+        # Enforce query timeouts
+        # Log all database interactions
+        # Filter sensitive data from results
+        
+    def get_table_sample(self, table_name: str, limit: int = 10) -> List[Row]:
+        # Provide sample data for context
+        # Respect data privacy policies
+        # Mask sensitive columns
+```
+
+### Database Security and Privacy
+
+```mermaid
+graph TD
+    A[Database Query Request] --> B[Query Validation]
+    B --> C[Read-Only Enforcement]
+    C --> D[Timeout Application]
+    D --> E[Query Execution]
+    E --> F[Result Filtering]
+    F --> G[Sensitive Data Masking]
+    G --> H[Response Delivery]
+    
+    I[Security Policies] --> B
+    I --> F
+    I --> G
+```
+
+**Security Measures:**
+- Read-only database access only
+- Query timeout enforcement (30 seconds max)
+- Sensitive data column identification and masking
+- No data persistence outside of analysis context
+- Connection credential encryption
+- Audit logging of all database interactions
+
+```
+```
+
 ## Error Handling Strategy
 
 ### Error Categories
@@ -370,6 +618,14 @@ graph TD
     D[User Input Errors] --> D1[Invalid Task Format]
     D[User Input Errors] --> D2[Malformed Markdown]
     D[User Input Errors] --> D3[Missing Required Fields]
+    
+    E[Repository Errors] --> E1[Repository Not Found]
+    E[Repository Errors] --> E2[File Access Denied]
+    E[Repository Errors] --> E3[Git Operation Failures]
+    
+    F[Database Errors] --> F1[Connection Failures]
+    F[Database Errors] --> F2[Schema Access Denied]
+    F[Database Errors] --> F3[Query Timeout]
 ```
 
 ### Error Response Strategy
@@ -423,10 +679,16 @@ services:
     volumes:
       - ./tasks.md:/app/tasks.md
       - ./logs:/app/logs
+      - ./repositories:/app/repositories:ro  # Read-only repository access
     environment:
       - AWS_PROFILE=${AWS_PROFILE}
       - JIRA_PAT=${JIRA_PAT}
       - JIRA_BASE_URL=${JIRA_BASE_URL}
+      - REPOSITORY_BASE_PATH=/app/repositories
+      - ORACLE_JDBC_URL=${ORACLE_JDBC_URL}
+      - ORACLE_USERNAME=${ORACLE_USERNAME}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_SCHEMA=${ORACLE_SCHEMA}
 ```
 
 ## Monitoring and Observability
@@ -490,13 +752,19 @@ def log_request(guid: str, step: str, data: dict):
 ## Performance Characteristics
 
 ### Expected Performance
-- Task processing: 30-60 seconds end-to-end
-- Agent response time: 5-15 seconds per agent
+- Repository scanning: 10-30 seconds (cached after first scan)
+- Database schema analysis: 5-15 seconds (cached per schema)
+- Task processing: 45-90 seconds end-to-end (including codebase analysis)
+- Agent response time: 10-25 seconds per agent (with repository context)
 - UI responsiveness: <200ms for user interactions
-- Memory usage: <512MB under normal load
+- Memory usage: <1GB under normal load (with repository indexing)
+- Repository context switching: 1-3 seconds
 
 ### Scalability Constraints
 - Single-user local deployment
 - Sequential task processing
 - No horizontal scaling capabilities
 - Bounded by AWS Bedrock rate limits
+- Repository scan performance scales with number of repositories
+- Database query performance depends on schema complexity
+- Memory usage increases with repository cache size
